@@ -3,59 +3,60 @@ import asyncio
 from fastapi import HTTPException
 from typing import Dict, Any, Optional
 
-REDGIFS_TEMPORARY_AUTH_URL = "https://api.redgifs.com/v2/auth/temporary"
+REDGIFS_TOKEN_URL = "https://api.redgifs.com/v2/auth/temporary"
 REDGIFS_TAGS_URL = "https://api.redgifs.com/v2/tags"
 REDGIFS_NICHES_URL = "https://api.redgifs.com/v2/niches"
 
 async def fetch_top_redgifs_tags(refresh_token: Optional[str] = None) -> Dict[str, Any]:
     """
-    Парсит живые теги и ниши прямо с серверов RedGifs.
-    Автоматически получает рабочий Access Token сессии, обходя 404 ошибки OAuth.
+    Парсит живые теги и ниши напрямую через твой IP (без прокси).
+    Сначала получает легитимный гостевой Access Token с серверов RedGifs для прохода авторизации.
     """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
         "Origin": "https://www.redgifs.com",
         "Referer": "https://www.redgifs.com/"
     }
 
     async with aiohttp.ClientSession() as session:
-        # 1. ПОЛУЧЕНИЕ ТОКЕНА СЕССИИ (Для прохода через Cloudflare и API)
-        # Если передан токен модели — используем его, иначе запрашиваем легитимный temporary-токен сайта
-        token_to_use = refresh_token.strip() if refresh_token and refresh_token.strip() else None
-        
-        if not token_to_use:
-            try:
-                async with session.get(REDGIFS_TEMPORARY_AUTH_URL, headers=headers, timeout=5) as temp_resp:
-                    if temp_resp.status == 200:
-                        temp_data = await temp_resp.json()
-                        token_to_use = temp_data.get("token")
-                        print("[🔑 REDGIFS AUTH] Получен рабочий временный токен сессии.")
-            except Exception as e:
-                print(f"[⚠️ REDGIFS AUTH] Не удалось получить временный токен: {e}")
+        # Инициализируем токен авторизации
+        access_token = None
 
-        # Если токен успешно добыт (свой или временный), подмешиваем в Bearer авторизацию
-        if token_to_use:
-            headers["Authorization"] = f"Bearer {token_to_use}"
+        # Шаг 1: Получаем живой временный токен, который сам RG использует для незалогиненных пользователей
+        try:
+            async with session.get(REDGIFS_TOKEN_URL, headers=headers, timeout=5) as token_resp:
+                if token_resp.status == 200:
+                    token_data = await token_resp.json()
+                    access_token = token_data.get("token")
+                else:
+                    print(f"[⚠️ RG AUTH] Статус получения токена: {token_resp.status}")
+        except Exception as e:
+            print(f"[⚠️ RG AUTH] Не удалось достучаться до auth-сервера: {e}")
 
-        # 2. ЖИВОЙ ПАРСИНГ ТЕГОВ И НИШ
+        # Если токен получен, добавляем его в заголовки (без Bearer токена RG не отдаст теги)
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+        else:
+            raise HTTPException(status_code=502, detail="Could not obtain required temporary token from RedGifs")
+
+        # Шаг 2: Напрямую выкачиваем теги и ниши
         try:
             tags_task = session.get(REDGIFS_TAGS_URL, headers=headers, timeout=6)
             niches_task = session.get(REDGIFS_NICHES_URL, headers=headers, timeout=6)
             
             tags_resp, niches_resp = await asyncio.gather(tags_task, niches_task)
 
-            print(f"[DEBUG API] Запрос данных: Tags Status={tags_resp.status}, Niches Status={niches_resp.status}")
-
-            if tags_resp.status != 200:
-                raise HTTPException(status_code=tags_resp.status, detail="RedGifs Tags API block.")
-            if niches_resp.status != 200:
-                raise HTTPException(status_code=niches_resp.status, detail="RedGifs Niches API block.")
+            if tags_resp.status != 200 or niches_resp.status != 200:
+                raise HTTPException(
+                    status_code=502, 
+                    detail=f"RedGifs blocked data request. Tags code: {tags_resp.status}, Niches code: {niches_resp.status}"
+                )
 
             tags_data = await tags_resp.json()
             niches_data = await niches_resp.json()
 
-            # Парсим теги из структуры ответа
+            # Вытаскиваем трендовые теги
             raw_tags = [t["id"] for t in tags_data.get("tags", []) if "id" in t]
             if not raw_tags:
                 raw_tags = [t["id"] for t in tags_data.get("topTags", []) if "id" in t]
@@ -65,15 +66,15 @@ async def fetch_top_redgifs_tags(refresh_token: Optional[str] = None) -> Dict[st
             niches_list = []
             relations = {}
 
-            # Строим живую карту распределения тегов по категориям
+            # Парсим ниши и выстраиваем карту зависимостей
             for item in raw_niches_data:
                 niche_id = item.get("id") or item.get("name")
                 if not niche_id:
                     continue
                 
                 niches_list.append(niche_id)
-
                 associated_tags = item.get("tags", []) or item.get("searchTags", []) or []
+                
                 for t in associated_tags:
                     if not isinstance(t, str):
                         continue
@@ -87,9 +88,6 @@ async def fetch_top_redgifs_tags(refresh_token: Optional[str] = None) -> Dict[st
                     if t_lower not in raw_tags:
                         raw_tags.append(t_lower)
 
-            if not raw_tags or not niches_list:
-                raise HTTPException(status_code=502, detail="RedGifs returned empty JSON fields.")
-
             return {
                 "tags": list(set(raw_tags))[:50],
                 "niches": niches_list,
@@ -99,4 +97,4 @@ async def fetch_top_redgifs_tags(refresh_token: Optional[str] = None) -> Dict[st
         except HTTPException as http_err:
             raise http_err
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Parser dead: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Live parsing error: {str(e)}")
