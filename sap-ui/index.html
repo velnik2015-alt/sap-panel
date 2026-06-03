@@ -3,26 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAP PANEL</title>
-  <link rel="stylesheet" href="/src/style.css">
+  <title>SAP Panel</title>
+  <link rel="stylesheet" href="./src/style.css">
 </head>
 <body>
-  <div id="app">
-    <div class="titlebar" data-tauri-drag-region>
-      SAP PANEL v0.1.0
-    </div>
-    
-    <div class="content">
-      <div class="form-group">
-        <input type="text" id="model-name" placeholder="Имя модели...">
-        <button id="add-btn">Добавить</button>
-      </div>
 
-      <div id="models-list">
-        <div class="loading">Загрузка активных сессий...</div>
+  <div class="titlebar" data-tauri-drag-region>
+    <span data-tauri-drag-region>SAP PANEL v0.1.0</span>
+    <div class="titlebar-actions">
+      <button id="open-modal-btn" title="Добавить новую модель">👩‍🦰</button>
+      <button id="close-btn">×</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="models-list">
+      <div class="loading">Загрузка моделей...</div>
+    </div>
+    <div id="parser-status" class="status-box" style="display: none;"></div>
+  </div>
+
+  <div id="model-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Новая модель</h3>
+        <button id="close-modal-btn">×</button>
+      </div>
+      
+      <div class="form-group">
+        <input type="text" id="model-name" placeholder="Имя модели (Reddit login)">
+        <input type="text" id="model-token" placeholder="RedGifs Refresh Token">
+        
+        <label>Выберите Нишу:</label>
+        <div id="niches-container" class="badge-select-box"></div>
+
+        <label>Выберите Теги (Топ с RedGifs):</label>
+        <div id="tags-container" class="badge-select-box"></div>
+
+        <button id="save-model-btn" class="submit-btn">Сохранить модель</button>
       </div>
     </div>
   </div>
-  <script type="module" src="/src/main.ts"></script>
+
+  <script type="module" src="./src/main.ts"></script>
 </body>
 </html>
