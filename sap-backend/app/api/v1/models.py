@@ -37,9 +37,9 @@ async def create_model(model: ModelCreate):
     return model
 
 @router.get("/redgifs-meta")
-async def get_redgifs_meta():
-    """Эндпоинт, который Tauri дергает при клике на эмодзи девушки 👩‍🦰"""
-    meta = await fetch_top_redgifs_tags()
+async def get_redgifs_meta(token: Optional[str] = None):
+    """Динамический эндпоинт мета-данных с поддержкой авторизации токена модели"""
+    meta = await fetch_top_redgifs_tags(refresh_token=token)
     return meta
 
 @router.put("/{model_name}", response_model=ModelResponse)

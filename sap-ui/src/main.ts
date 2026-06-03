@@ -75,7 +75,25 @@ window.addEventListener("DOMContentLoaded", () => {
     showStep(1);
   });
   
-  nextToStep3.addEventListener("click", () => showStep(2));
+  nextToStep3.addEventListener("click", async () => {
+    showStep(2);
+    
+    // Если токен в инпуте есть, принудительно обновляем кэш тегов уже через реальный вход!
+    const tokenVal = tokenInput.value.trim();
+    if (tokenVal) {
+      tagsContainer.innerHTML = "<div class='loading'>Авторизация и загрузка тегов модели...</div>";
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/v1/models/redgifs-meta?token=${encodeURIComponent(tokenVal)}`);
+        if (res.ok) {
+          cachedMeta = await res.json();
+          renderTags();
+          renderNiches();
+        }
+      } catch (err) {
+        console.error("Ошибка авторизованного парсинга:", err);
+      }
+    }
+  });
   nextToStep4.addEventListener("click", () => showStep(3));
 
   backToStep1.addEventListener("click", () => showStep(0));
