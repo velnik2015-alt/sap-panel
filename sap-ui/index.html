@@ -3,44 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAP Panel</title>
+  <title>RedGifs Upload</title>
   <link rel="stylesheet" href="./src/style.css">
 </head>
 <body>
 
   <div class="titlebar" data-tauri-drag-region>
-    <span data-tauri-drag-region>SAP PANEL v0.1.0</span>
-    <div class="titlebar-actions">
-      <button id="open-modal-btn" title="Добавить новую модель">👩‍🦰</button>
-      <button id="close-btn">×</button>
-    </div>
+    <button id="open-modal-btn" title="Добавить новую модель">👩‍🦰</button>
+    <span class="titlebar-text" data-tauri-drag-region>RedGifs_Upload <small>v0.1.0</small></span>
+    <button id="close-btn" title="Закрыть">×</button>
   </div>
 
   <div class="content">
-    <div id="models-list">
-      <div class="loading">Загрузка моделей...</div>
+    <div class="section-title">Ваши модели</div>
+    <div id="models-list" class="models-grid">
+      <div class="loading">Загрузка...</div>
     </div>
-    <div id="parser-status" class="status-box" style="display: none;"></div>
   </div>
 
   <div id="model-modal" class="modal" style="display: none;">
     <div class="modal-content">
+      
       <div class="modal-header">
-        <h3>Новая модель</h3>
+        <h3 id="modal-title">Новая модель</h3>
         <button id="close-modal-btn">×</button>
       </div>
       
-      <div class="form-group">
-        <input type="text" id="model-name" placeholder="Имя модели (Reddit login)">
-        <input type="text" id="model-token" placeholder="RedGifs Refresh Token">
+      <div class="modal-body">
         
-        <label>Выберите Нишу:</label>
-        <div id="niches-container" class="badge-select-box"></div>
+        <div id="step-1" class="form-step">
+          <label class="step-label">Шаг 1 из 4: Юзернейм</label>
+          <input type="text" id="model-name" class="rg-input" placeholder="Введите имя модели (Reddit Login)">
+          <button id="next-to-step-2" class="rg-btn primary">Далее →</button>
+        </div>
 
-        <label>Выберите Теги (Топ с RedGifs):</label>
-        <div id="tags-container" class="badge-select-box"></div>
+        <div id="step-2" class="form-step" style="display: none;">
+          <label class="step-label">Шаг 2 из 4: Авторизация RedGifs</label>
+          <input type="text" id="model-token" class="rg-input" placeholder="Вставьте RedGifs Refresh Token">
+          <div class="step-actions">
+            <button id="back-to-step-1" class="rg-btn secondary">Назад</button>
+            <button id="next-to-step-3" class="rg-btn primary">Далее →</button>
+          </div>
+        </div>
 
-        <button id="save-model-btn" class="submit-btn">Сохранить модель</button>
+        <div id="step-3" class="form-step" style="display: none;">
+          <div class="step-header-box">
+            <label class="step-label">Шаг 3 из 4: Выберите теги (до 10 шт)</label>
+            <span id="tags-counter" class="step-counter">0 / 10</span>
+          </div>
+          <div id="tags-container" class="rg-scroll-box"></div>
+          <div class="step-actions">
+            <button id="back-to-step-2" class="rg-btn secondary">Назад</button>
+            <button id="next-to-step-4" class="rg-btn primary">Далее →</button>
+          </div>
+        </div>
+
+        <div id="step-4" class="form-step" style="display: none;">
+          <div class="step-header-box">
+            <label class="step-label">Шаг 4 из 4: Выберите макро-ниши (до 5 шт)</label>
+            <span id="niches-counter" class="step-counter">0 / 5</span>
+          </div>
+          <div id="niches-container" class="rg-scroll-box"></div>
+          <div class="step-actions">
+            <button id="back-to-step-3" class="rg-btn secondary">Назад</button>
+            <button id="save-model-btn" class="rg-btn submit">Сохранить модель ✨</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
