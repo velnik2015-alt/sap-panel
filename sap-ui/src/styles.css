@@ -1,98 +1,132 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #ffffff;
+  color-scheme: dark;
+}
+
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* Запрещаем выделение текста, чтобы не лагало при перетаскивании */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: rgba(20, 20, 20, 0.65);
-    backdrop-filter: blur(12px);
-    color: #ffffff;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+/* Фикс прозрачности: даем базовый плотный полупрозрачный фон для всей прослойки WebView2 */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(211, 20, 20, 0.75) !important;
+  border-radius: 12px;
 }
 
+/* Главный контейнер панели */
+#app {
+  width: 100%;
+  height: 100%;
+  /* Эффект матового стекла (Glassmorphism) */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 10, 10, 0.902);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: 0 8px 32px 0 rgba(255, 3, 3, 0.908);
+}
+
+/* Область, за которую МОЖНО перетаскивать окно */
 .titlebar {
-    height: 32px;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    user-select: none;
-    cursor: grab;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  height: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgb(255, 0, 0);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  /* Курсор показывает пользователю, что здесь зона перетаскивания */
+  cursor: grab;
 }
 
 .titlebar:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
-.title {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.5);
-    pointer-events: none;
+.version {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(152, 40, 40, 0.5);
+  letter-spacing: 0.5px;
 }
 
 .content {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
 }
 
-form {
-    display: flex;
-    gap: 8px;
+/* Форма добавления моделей */
+.form-group {
+  display: flex;
+  gap: 8px;
 }
 
 input {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    outline: none;
-    transition: 0.2s;
+  flex: 1;
+  background: rgb(255, 25, 25);
+  border: 1px solid rgb(170, 31, 31);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ff0b0b;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
 }
 
 input:focus {
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(233, 12, 12, 0.891);
+  background: rgb(217, 10, 10);
 }
 
 button {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-weight: 500;
+  background: #d20a0a;
+  color: #9a1616;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 button:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background: rgba(187, 39, 39, 0.948);
 }
 
-#models-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
+/* Карточки моделей */
 .model-card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 14px;
+  background: rgba(215, 58, 58, 0.982);
+  border: 1px solid rgba(166, 36, 36, 0.926);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.model-card:hover {
+  background: rgba(255, 255, 255, 0.931)
+}
+
+.loading {
+  text-align: center;
+  color: rgb(255, 1, 1);
+  font-size: 13px;
+  margin-top: 20px;
 }
