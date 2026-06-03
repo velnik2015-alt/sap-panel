@@ -1,223 +1,325 @@
-:root {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #ffffff;
-  color-scheme: dark;
-}
-
+/* ==========================================================================
+   1. БАЗОВЫЕ НАСТРОЙКИ ОКНА И СБРОС СТИЛЕЙ
+   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* Полностью исключаем выделение текста при перетаскивании виджета */
-  user-select: none;
-  -webkit-user-select: none;
 }
 
-html, body {
-  width: 100%;
-  height: 100%;
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: rgba(18, 18, 20, 0.96); /* Высокая плотность: дорогой графит */
+  color: #e2e2e9;
+  height: 100vh;
   overflow: hidden;
-  background: transparent !important; /* Важно для работы альфа-канала ОС */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-/* Главный контейнер "Матовое стекло" */
-#app {
-  width: 100%;
-  height: 100%;
-  /* Цвет глубокого полупрозрачного графита */
-  background: rgba(18, 18, 18, 0.65); 
-  /* Системное размытие заднего фона Windows */
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  /* Тонкая неоновая грань, отделяющая софт от рабочего стола */
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  padding: 14px;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
-  transition: border-color 0.3s ease;
+/* Скроллбары под стиль RedGifs для всего приложения */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #121214;
+}
+::-webkit-scrollbar-thumb {
+  background: #3a3a42;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff69b4;
 }
 
-/* Подсвечиваем рамку, когда панель активна */
-#app:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
+/* ==========================================================================
+   2. СИСТЕМНЫЙ ТАЙТЛБАР (ШАПКА ОКНА)
+   ========================================================================== */
 .titlebar {
-  height: 40px;
-  background: rgba(30, 30, 30, 0.75); /* Плотный rgba-цвет, ОС должна видеть пиксели */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 44px;
+  background: #16161a;
+  border-bottom: 1px solid #252529;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 15px;
+  justify-content: space-between;
+  padding: 0 12px;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  
-  /* ЖЕСТКИЙ ФИКС ДЛЯ WINDOWS В WEBVIEW2 */
   position: relative;
   z-index: 9999;
-  -webkit-app-region: drag; /* Дублируем драг на уровне движка Chromium */
+  -webkit-app-region: drag;
 }
 
 .titlebar:active {
   cursor: grabbing;
 }
 
-/* Все дочерние элементы шапки (текст, кнопки) */
-.titlebar span {
-  font-size: 12px;
+/* Отключение драга для интерактивных элементов шапки */
+.titlebar button,
+.titlebar-text {
+  -webkit-app-region: no-drag;
+}
+
+/* Текст названия софта */
+.titlebar-text {
+  flex-grow: 1;
+  text-align: left;
+  margin-left: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.8);
-  pointer-events: none; /* Текст не должен жрать клики мыши */
-}
-
-.titlebar button {
-  -webkit-app-region: no-drag; /* Кнопки внутри шапки НЕ должны таскать окно */
-  pointer-events: auto;
-}
-
-.version {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-/* Контентная зона со скрытым футуристичным скроллом */
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-/* Стилизация скроллбара под минимализм */
-.content::-webkit-scrollbar {
-  width: 4px;
-}
-.content::-webkit-scrollbar_track {
-  background: transparent;
-}
-.content::-webkit-scrollbar_thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-.content::-webkit-scrollbar_thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Поля ввода (Инпуты) */
-.form-group {
-  display: flex;
-  gap: 8px;
-}
-
-input {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 8px 12px;
   color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input:focus {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
+.titlebar-text small {
+  color: #ff69b4; /* Розовый акцент на версию */
+  font-size: 11px;
+  margin-left: 4px;
+  font-weight: 400;
 }
 
-input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-/* Кнопка "Добавить" */
-button {
-  background: #ffffff;
-  color: #0b0b0b;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
+/* Кнопка-эмодзи 👩‍🦰 (Слева) */
+#open-modal-btn {
+  width: 28px;
+  height: 28px;
+  background: #202024;
+  border: 1px solid #323238;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-}
-
-button:hover {
-  background: #e5e5e5;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.15);
-}
-
-button:active {
-  transform: translateY(1px);
-}
-
-/* Карточки моделей (Каждая карточка — тоже микро-стекло) */
-.model-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  transition: all 0.2s ease;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+#open-modal-btn:hover {
+  background: rgba(255, 105, 180, 0.1);
+  border-color: #ff69b4;
+  transform: translateY(-1px);
+}
+
+/* Кнопка закрытия окна × (Справа) */
+#close-btn {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: #8a8a93;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+#close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   3. ГЛАВНЫЙ ЭКРАН (РАБОЧАЯ ОБЛАСТЬ И СЕТКА МОДЕЛЕЙ)
+   ========================================================================== */
+.content {
+  padding: 16px;
+  height: calc(100vh - 44px);
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8a8a93;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* Сетка карточек моделей */
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+/* Стильные плитки моделей с ненавязчивым дыханием/свечением */
+.model-card {
+  background: #19191c;
+  border: 1px solid #2a2a30;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .model-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: scale(1.02);
+  border-color: #ff69b4;
+  background: #1f1f24;
+  transform: translateY(-2px);
+  /* Мягкое неоновое свечение */
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.15);
 }
 
-  /* Кнопка в тайтлбаре */
-/* Контейнеры скролла под RedGifs */
-.badge-select-box {
+.model-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-meta {
+  font-size: 11px;
+  color: #8a8a93;
+}
+
+/* Состояния загрузки / ошибок */
+.loading, .error {
+  font-size: 13px;
+  color: #8a8a93;
+  text-align: center;
+  padding: 20px 0;
+  grid-column: 1 / -1;
+}
+.error { color: #ef4444; }
+
+/* ==========================================================================
+   4. ПОШАГОВАЯ МОДАЛКА (GLASSMORPHISM СТЕППЕР)
+   ========================================================================== */
+.modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(8, 8, 10, 0.75);
+  backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: #16161a;
+  border: 1px solid #2d2d34;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 360px;
+  max-height: 85%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #232329;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+#close-modal-btn {
+  background: none;
+  border: none;
+  color: #8a8a93;
+  font-size: 20px;
+  cursor: pointer;
+}
+#close-modal-btn:hover { color: #ffffff; }
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Элементы шагов внутри формы */
+.form-step {
+  animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a8a93;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Премиальные темные поля ввода */
+.rg-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0e0e10;
+  border: 1px solid #252529;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 13px;
+  margin-bottom: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.rg-input:focus {
+  border-color: #ff69b4;
+  box-shadow: 0 0 8px rgba(255, 105, 180, 0.2);
+}
+
+/* ==========================================================================
+   5. БОЛЬШИЕ УДОБНЫЕ ПЛИТКИ ТЕГОВ И НИШ (REDGIFS STYLE)
+   ========================================================================== */
+.step-header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.step-counter {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6a6a75;
+}
+.step-counter.limit-reached {
+  color: #ff4500;
+}
+
+.rg-scroll-box {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  max-height: 140px;
+  gap: 6px;
+  max-height: 180px;
   overflow-y: auto;
-  background: #121214; /* Цвет оригинального RedGifs */
+  background: #0e0e10;
   padding: 10px;
   border-radius: 8px;
-  margin-bottom: 12px;
-  border: 1px solid #2a2a2e;
+  border: 1px solid #232329;
+  margin-bottom: 14px;
 }
 
-/* Кастомный скроллбар */
-.badge-select-box::-webkit-scrollbar {
-  width: 4px;
-}
-.badge-select-box::-webkit-scrollbar-thumb {
-  background: #ff69b4;
-  border-radius: 10px;
-}
-
-/* Баджи среднего размера один в один как на RG */
+/* Плитки баджей среднего понятного размера */
 .badge {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 14px;
-  background: #202024;
-  border: 1px solid #3a3a40;
-  color: #e2e2e9;
+  padding: 6px 12px;
+  background: #1c1c21;
+  border: 1px solid #2d2d34;
+  color: #d1d1d6;
   border-radius: 20px;
   cursor: pointer;
   user-select: none;
@@ -225,34 +327,76 @@ button:active {
 }
 
 .badge:hover {
-  background: #2a2a30;
-  border-color: #ff69b4;
+  background: #25252b;
+  border-color: #8a8a93;
 }
 
-/* Выбранный бадж в стиле RedGifs */
+/* Выбранная плитка в фирменном неоне RedGifs */
 .badge.selected {
-  background: rgba(255, 105, 180, 0.15);
+  background: rgba(255, 105, 180, 0.12);
   border-color: #ff69b4;
   color: #ff69b4;
-  box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
 }
 
-/* Заголовки с лимитами */
-.form-label-box {
+/* ==========================================================================
+   6. КНОПКИ НАВИГАЦИИ ФОРМЫ
+   ========================================================================== */
+.step-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-top: 4px;
 }
-.form-label-box label {
-  font-size: 12px;
-  color: #9a9a9f;
+
+.rg-btn {
+  padding: 10px 16px;
+  font-size: 13px;
   font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.counter-hint {
-  font-size: 11px;
-  color: #6a6a6f;
+
+/* Главная розовая кнопка */
+.rg-btn.primary {
+  background: #ff69b4;
+  color: #ffffff;
+  flex-grow: 1;
 }
-.counter-hint.limit-reached {
-  color: #ff4500;
+.rg-btn.primary:hover {
+  background: #ff4da6;
+  transform: translateY(-1px);
 }
+
+/* Второстепенная серая кнопка */
+.rg-btn.secondary {
+  background: #252529;
+  border: 1px solid #323238;
+  color: #a1a1aa;
+}
+.rg-btn.secondary:hover {
+  background: #2e2e34;
+  color: #ffffff;
+}
+
+/* Финальная кнопка сохранения */
+.rg-btn.submit {
+  background: #ff69b4;
+  color: #ffffff;
+  flex-grow: 1;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+}
+.rg-btn.submit:hover {
+  background: #ff3399;
+  box-shadow: 0 4px 16px rgba(255, 105, 180, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Анимации */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

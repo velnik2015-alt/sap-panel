@@ -41,3 +41,16 @@ async def get_redgifs_meta():
     """Эндпоинт, который Tauri дергает при клике на эмодзи девушки 👩‍🦰"""
     meta = await fetch_top_redgifs_tags()
     return meta
+
+@router.put("/{model_name}", response_model=ModelResponse)
+async def update_model(model_name: str, model: ModelCreate):
+    """Обновляет существующую модель по её имени"""
+    models = await load_from_json()
+    
+    for idx, m in enumerate(models):
+        if m["name"].lower() == model_name.lower():
+            models[idx] = model.model_dump()
+            await save_to_json(models)
+            return model
+            
+    raise HTTPException(status_code=404, detail="Модель не найдена для обновления")

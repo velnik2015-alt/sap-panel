@@ -1,10 +1,17 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
+// Четкие интерфейсы данных для компилятора TypeScript
 interface Model {
   name: string;
   token?: string;
   niches: string[];
   tags: string[];
+}
+
+interface RedGifsMeta {
+  niches: string[];
+  tags: string[];
+  relations: Record<string, string[]>;
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -18,7 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-btn")!;
   const saveModelBtn = document.getElementById("save-model-btn")!;
 
-  // Шаги формы
+  // Массив шагов формы
   const steps = [
     document.getElementById("step-1")!,
     document.getElementById("step-2")!,
@@ -26,7 +33,7 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("step-4")!
   ];
 
-  // Кнопки навигации по шагам
+  // Кнопки навигации по шагам (степпер)
   const nextToStep2 = document.getElementById("next-to-step-2")!;
   const nextToStep3 = document.getElementById("next-to-step-3")!;
   const nextToStep4 = document.getElementById("next-to-step-4")!;
@@ -34,7 +41,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const backToStep2 = document.getElementById("back-to-step-2")!;
   const backToStep3 = document.getElementById("back-to-step-3")!;
 
-  // Поля ввода и контейнеры
+  // Поля ввода, контейнеры вывода баджей и счетчики
   const nameInput = document.getElementById("model-name") as HTMLInputElement;
   const tokenInput = document.getElementById("model-token") as HTMLInputElement;
   const nichesContainer = document.getElementById("niches-container")!;
@@ -42,22 +49,24 @@ window.addEventListener("DOMContentLoaded", () => {
   const nichesCounter = document.getElementById("niches-counter")!;
   const tagsCounter = document.getElementById("tags-counter")!;
 
-  // --- СОСТОЯНИЕ (STATE) ---
+  // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ (STATE) ---
   let selectedNiches: string[] = [];
   let selectedTags: string[] = [];
-  let cachedMeta: { niches: string[], tags: string[] } | null = null;
-  let isEditing = false; // Флаг: редактируем старую модель или создаем новую
+  let cachedMeta: RedGifsMeta | null = null; // Единственная валидная декларация переменной мета-данных
+  let isEditing = false; // Флаг режима изменения модели
 
-  // --- 1. СИСТЕМНЫЕ ФУНКЦИИ ОКНА ---
+  // --- 1. СИСТЕМНОЕ ЗАКРЫТИЕ ОКНА TAURI ---
   closeBtn.addEventListener("click", async () => {
     const appWindow = getCurrentWindow();
-    await appWindow.close(); // Жесткое закрытие процесса Tauri
+    await appWindow.close();
   });
 
-  // --- 2. УПРАВЛЕНИЕ ШАГАМИ ФОРМЫ (СТЕППЕР) ---
+  // --- 2. ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ШАГОВ ФОРМЫ ---
   function showStep(stepIndex: number) {
     steps.forEach((step, idx) => {
-      step.style.display = idx === stepIndex ? "block" : "none";
+      if (step) {
+        step.style.display = idx === stepIndex ? "block" : "none";
+      }
     });
   }
 
@@ -73,7 +82,7 @@ window.addEventListener("DOMContentLoaded", () => {
   backToStep2.addEventListener("click", () => showStep(1));
   backToStep3.addEventListener("click", () => showStep(2));
 
-  // --- 3. ЗАГРУЗКА И КЭШИРОВАНИЕ МЕТА-ДАННЫХ REDGIFS ---
+  // --- 3. ФОНОВАЯ СИНХРОНИЗАЦИЯ С БЭКЕНДОМ И ВЫВОД БАДЖЕЙ ---
   async function preloadRedGifsMeta() {
     nichesContainer.innerHTML = "<div class='loading'>Синхронизация ниш...</div>";
     tagsContainer.innerHTML = "<div class='loading'>Синхронизация тегов...</div>";
@@ -81,30 +90,60 @@ window.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("http://127.0.0.1:8000/api/v1/models/redgifs-meta");
       if (!res.ok) throw new Error();
       cachedMeta = await res.json();
-      renderMetaBadges();
+      
+      renderTags();
+      renderNiches();
     } catch {
       nichesContainer.innerHTML = "<span class='error'>Ошибка сети бэкенда</span>";
       tagsContainer.innerHTML = "<span class='error'>Ошибка сети бэкенда</span>";
     }
   }
 
-  function renderMetaBadges() {
+  // Отрендерить большие плитки тегов (Шаг 3)
+  function renderTags() {
     if (!cachedMeta) return;
-    
-    // Рендерим крупные плитки ниш и тегов
-    nichesContainer.innerHTML = cachedMeta.niches.map(n => {
-      const isSelected = selectedNiches.includes(n) ? "selected" : "";
-      return `<span class="badge ${isSelected}" data-value="${n}">${n}</span>`;
-    }).join('');
-
     tagsContainer.innerHTML = cachedMeta.tags.map(t => {
       const isSelected = selectedTags.includes(t) ? "selected" : "";
-      return `<span class="badge ${isSelected}" data-value="${t}">#${t}</span>`;
+      return `<span class="badge tag-badge ${isSelected}" data-value="${t}">#${t}</span>`;
     }).join('');
-
     updateCounters();
   }
 
+  // Отрендерить живые ниши (Шаг 4), отфильтрованные под выбранные теги
+  function renderNiches() {
+    if (!cachedMeta || !cachedMeta.relations) return;
+
+    let nichesToRender = cachedMeta.niches;
+
+    // Если юзер выбрал теги на предыдущем шаге, запускаем реактивный фильтр
+    if (selectedTags.length > 0) {
+      const activeNichesSet = new Set<string>();
+      
+      selectedTags.forEach(tag => {
+        const lowerTag = tag.toLowerCase();
+        const matchingNiches = cachedMeta?.relations?.[lowerTag];
+        
+        if (matchingNiches) {
+          matchingNiches.forEach((niche: string) => activeNichesSet.add(niche));
+        }
+      });
+      
+      if (activeNichesSet.size > 0) {
+        nichesToRender = Array.from(activeNichesSet);
+      }
+    }
+
+    nichesContainer.innerHTML = nichesToRender.map(n => {
+      const isSelected = selectedNiches.includes(n) ? "selected" : "";
+      return `<span class="badge niche-badge ${isSelected}" data-value="${n}">${n}</span>`;
+    }).join('');
+
+    // Страховка: если ниша была выбрана, но исчезла из-за нового фильтра тегов, убираем её
+    selectedNiches = selectedNiches.filter(n => nichesToRender.includes(n));
+    updateCounters();
+  }
+
+  // Обновление цифр в счетчиках и проверка лимитов RedGifs (5 ниш, 10 тегов)
   function updateCounters() {
     nichesCounter.innerText = `${selectedNiches.length} / 5`;
     tagsCounter.innerText = `${selectedTags.length} / 10`;
@@ -116,7 +155,25 @@ window.addEventListener("DOMContentLoaded", () => {
     else tagsCounter.classList.remove("limit-reached");
   }
 
-  // Делегирование кликов на баджи (с лимитами)
+  // Делегированные клики по тегам (с живым пересчетом ниш на лету)
+  tagsContainer.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains("badge")) return;
+    const val = target.getAttribute("data-value")!;
+
+    if (target.classList.contains("selected")) {
+      target.classList.remove("selected");
+      selectedTags = selectedTags.filter(t => t !== val);
+    } else {
+      if (selectedTags.length >= 10) return;
+      target.classList.add("selected");
+      selectedTags.push(val);
+    }
+    
+    renderNiches(); // Кликнули тег -> мгновенно обновился список ниш для шага 4
+  });
+
+  // Делегированные клики по нишам
   nichesContainer.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     if (!target.classList.contains("badge")) return;
@@ -133,23 +190,7 @@ window.addEventListener("DOMContentLoaded", () => {
     updateCounters();
   });
 
-  tagsContainer.addEventListener("click", (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.classList.contains("badge")) return;
-    const val = target.getAttribute("data-value")!;
-
-    if (target.classList.contains("selected")) {
-      target.classList.remove("selected");
-      selectedTags = selectedTags.filter(t => t !== val);
-    } else {
-      if (selectedTags.length >= 10) return;
-      target.classList.add("selected");
-      selectedTags.push(val);
-    }
-    updateCounters();
-  });
-
-  // --- 4. РАБОТА СО СПИСКОМ МОДЕЛЕЙ (ОТКРЫТИЕ И РЕДАКТИРОВАНИЕ) ---
+  // --- 4. УПРАВЛЕНИЕ СПИСКОМ МОДЕЛЕЙ И ИХ ИЗМЕНЕНИЕМ ---
   async function loadModels() {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/v1/models/");
@@ -168,9 +209,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Клик по карточке модели открывает её для изменения данных
+  // Клик по плитке модели открывает её данные для изменения
   modelsList.addEventListener("click", async (e) => {
-    const card = (e.target as HTMLElement).closest(".model-card");
+    const target = e.target as HTMLElement;
+    const card = target.closest(".model-card");
     if (!card) return;
     
     const targetName = card.getAttribute("data-model-name")!;
@@ -181,28 +223,25 @@ window.addEventListener("DOMContentLoaded", () => {
       const currentModel = models.find(m => m.name === targetName);
       
       if (currentModel) {
-        isEditing = true;
-        modalToEditMode(currentModel);
+        isEditing = true; // Переключаемся в режим изменения
+        modalTitle.innerText = `Изменение: ${currentModel.name}`;
+        nameInput.value = currentModel.name;
+        nameInput.disabled = true; // Фиксируем имя (оно является ID записи)
+        tokenInput.value = currentModel.token || "";
+        selectedNiches = [...currentModel.niches];
+        selectedTags = [...currentModel.tags];
+        
+        modal.style.display = "flex";
+        showStep(0);
+        renderTags();
+        renderNiches();
       }
     } catch {
       alert("Не удалось загрузить данные модели");
     }
   });
 
-  function modalToEditMode(model: Model) {
-    modalTitle.innerText = `Изменение: ${model.name}`;
-    nameInput.value = model.name;
-    nameInput.disabled = True; // Запрещаем менять имя (оно ключ в базе)
-    tokenInput.value = model.token || "";
-    selectedNiches = [...model.niches];
-    selectedTags = [...model.tags];
-    
-    modal.style.display = "flex";
-    showStep(0);
-    renderMetaBadges();
-  }
-
-  // Клик по кнопке девушки сбрасывает форму в режим создания новой модели
+  // Нажатие на 👩‍🦰 сбрасывает форму в режим создания новой модели с нуля
   openModalBtn.addEventListener("click", () => {
     isEditing = false;
     modalTitle.innerText = "Новая модель";
@@ -214,11 +253,12 @@ window.addEventListener("DOMContentLoaded", () => {
     
     modal.style.display = "flex";
     showStep(0);
-    renderMetaBadges();
+    renderTags();
+    renderNiches();
     if (!cachedMeta) preloadRedGifsMeta();
   });
 
-  // --- 5. СОХРАНЕНИЕ ДАННЫХ ---
+// --- 5. СОХРАНЕНИЕ / ОБНОВЛЕНИЕ ДАННЫХ В СЕССИЮ ---
   saveModelBtn.addEventListener("click", async () => {
     if (!nameInput.value.trim()) return alert("Имя модели обязательно!");
 
@@ -229,10 +269,15 @@ window.addEventListener("DOMContentLoaded", () => {
       tags: selectedTags
     };
 
+    // Используем isEditing для выбора метода запроса (убирает варнинг)
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing 
+      ? `http://127.0.0.1:8000/api/v1/models/${encodeURIComponent(payload.name)}`
+      : "http://127.0.0.1:8000/api/v1/models/";
+
     try {
-      // Если это редактирование, бэкенд обработает POST как обновление по уникальному имени
-      const res = await fetch("http://127.0.0.1:8000/api/v1/models/", {
-        method: "POST",
+      const res = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -242,13 +287,15 @@ window.addEventListener("DOMContentLoaded", () => {
       modal.style.display = "none";
       loadModels();
     } catch {
-      alert("Ошибка при сохранении модели. Проверьте уникальность имени.");
+      alert("Ошибка сохранения. Проверьте соединение с бэкендом.");
     }
   });
 
-  closeModalBtn.addEventListener("click", () => modal.style.display = "none");
+  closeModalBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
 
-  // Инициализация при запуске софта
+  // Автостарт при инициализации Окошка
   loadModels();
   preloadRedGifsMeta();
 });
