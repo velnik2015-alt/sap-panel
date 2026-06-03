@@ -1,0 +1,177 @@
+:root {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #ffffff;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* Полностью исключаем выделение текста при перетаскивании виджета */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent !important; /* Важно для работы альфа-канала ОС */
+}
+
+/* Главный контейнер "Матовое стекло" */
+#app {
+  width: 100%;
+  height: 100%;
+  /* Цвет глубокого полупрозрачного графита */
+  background: rgba(18, 18, 18, 0.65); 
+  /* Системное размытие заднего фона Windows */
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  /* Тонкая неоновая грань, отделяющая софт от рабочего стола */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+  transition: border-color 0.3s ease;
+}
+
+/* Подсвечиваем рамку, когда панель активна */
+#app:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Шапка-Драгзона */
+.titlebar {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  
+  /* Хитрый фикс для Windows: запрещаем элементам шапки генерировать собственные события мыши */
+  pointer-events: auto; 
+  
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  
+  cursor: grab;
+}
+
+.titlebar:active {
+  cursor: grabbing;
+}
+
+.version {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Контентная зона со скрытым футуристичным скроллом */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* Стилизация скроллбара под минимализм */
+.content::-webkit-scrollbar {
+  width: 4px;
+}
+.content::-webkit-scrollbar_track {
+  background: transparent;
+}
+.content::-webkit-scrollbar_thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.content::-webkit-scrollbar_thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Поля ввода (Инпуты) */
+.form-group {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Кнопка "Добавить" */
+button {
+  background: #ffffff;
+  color: #0b0b0b;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+button:hover {
+  background: #e5e5e5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.15);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Карточки моделей (Каждая карточка — тоже микро-стекло) */
+.model-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.model-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: scale
