@@ -1,27 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAP Panel</title>
-  </head>
-  <body data-tauri-drag-region>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-tauri-drag-region>
     <div class="titlebar" data-tauri-drag-region>
-      <span style="font-weight: bold;" data-tauri-drag-region>SAP PANEL</span>
-      <span style="font-size: 12px; color: #aaa;">v0.1.0</span>
+        <span class="title" data-tauri-drag-region>SAP PANEL v0.1.0</span>
     </div>
-
+    
     <div class="content">
-      <div class="model-form">
-        <input type="text" id="modelName" placeholder="Имя модели..." />
-        <button id="addModelBtn">Добавить</button>
-      </div>
-
-      <div id="models-list">
-        <div class="loading">Загрузка...</div>
-      </div>
+        <form id="add-model-form">
+            <input type="text" id="model-name" placeholder="Имя модели..." required>
+            <button type="submit">Добавить</button>
+        </form>
+        <div id="models-list">Загрузка...</div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
-  </body>
+</body>
 </html>
