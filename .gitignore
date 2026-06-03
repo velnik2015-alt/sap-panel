@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+downloads/
+
+# Node / Frontend
+node_modules/
+dist/
+src-tauri/target/
+
+# Окружение
+.env
